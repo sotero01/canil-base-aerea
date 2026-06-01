@@ -2043,7 +2043,7 @@ const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
 
 // Verifica se JSONBin está configurado
 function jsonbinConfigurado() {
-  return JSONBIN_BIN_ID !== 'SEU_BIN_ID_AQUI' && JSONBIN_API_KEY !== 'SUA_API_KEY_AQUI';
+    return JSONBIN_BIN_ID !== '' && JSONBIN_API_KEY !== '';
 }
 
 // ====== STATE LOCAL ======
@@ -2076,7 +2076,7 @@ async function loadData() {
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const json = await res.json();
-    const d = json.record;
+    const d = json.record || json;
     state.materiais    = d.materiais    || [];
     state.medicamentos = d.medicamentos || [];
     state.treinos      = d.treinos      || [];
