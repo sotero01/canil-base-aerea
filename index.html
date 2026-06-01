@@ -2133,20 +2133,21 @@ async function saveData() {
   showSyncStatus('syncing', 'SALVANDO...');
   try {
     const payload = {
-      materiais:    state.materiais,
-      medicamentos: state.medicamentos,
-      treinos:      state.treinos,
-      caes:         state.caes,
-      log:          state.log.slice(0, 500),
-    };
-    const res = await fetch(JSONBIN_URL, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Master-Key': JSONBIN_API_KEY,
-      },
-      body: JSON.stringify(payload),
-    });
+            users: typeof users !== 'undefined' ? users : (typeof getUsers === 'function' ? getUsers() : {}),
+            materiais:    state.materiais,
+            medicamentos: state.medicamentos,
+            treinos:      state.treinos,
+            caes:         state.caes,
+            log:          state.log.slice(0, 500)
+        };
+        const res = await fetch(JSONBIN_URL, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': '$2b$10$EXEMPLO_COLE_SUA_CHAVE_AQUI_DENTRO'
+            },
+            body: JSON.stringify(payload)
+        });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     showSyncStatus('ok', 'SINCRONIZADO');
   } catch(e) {
