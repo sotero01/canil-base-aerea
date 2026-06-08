@@ -1317,6 +1317,52 @@
     .toggle-btn { min-height: 40px; }
   }
 
+
+  /* ===== RAÇÃO ===== */
+  .racao-nivel {
+    height: 18px;
+    border-radius: 2px;
+    overflow: hidden;
+    background: rgba(100,160,220,0.1);
+    margin-top: 0.4rem;
+    position: relative;
+  }
+  .racao-nivel-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s, background 0.5s;
+  }
+  .racao-card {
+    background: linear-gradient(145deg, var(--navy-dark), var(--navy-mid));
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 1.25rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .racao-card::before {
+    content:'';
+    position:absolute;
+    top:0;left:0;
+    width:4px;height:100%;
+  }
+  .racao-card.verde::before  { background: #2ecc71; }
+  .racao-card.laranja::before { background: #e8803a; }
+  .racao-card.vermelho::before { background: #e8407a; }
+  .racao-nome {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1rem; font-weight: 700;
+    color: var(--silver); letter-spacing: 0.06em;
+    margin-bottom: 0.1rem;
+  }
+  .racao-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  @media(max-width:768px) { .racao-grid { grid-template-columns: 1fr; } }
+
 </style>
 </head>
 <body>
@@ -1449,6 +1495,10 @@
     <button class="nav-tab" onclick="switchTab('treino')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
       Registro de Treino
+    </button>
+    <button class="nav-tab" onclick="switchTab('racao')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="6" cy="12" r="1" fill="currentColor"/><circle cx="6" cy="18" r="1" fill="currentColor"/></svg>
+      Ração
     </button>
     <button class="nav-tab" onclick="switchTab('caes')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 5.172C10 3.782 8.423 2.679 6.5 3c-2.823.47-4.113 6.006-4 7 .08.703 1.725 1.722 3.656 1 1.261-.472 1.96-1.45 2.344-2.5M14.267 5.172c0-1.39 1.577-2.493 3.5-2.172 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.96-1.45-2.344-2.5M8 14v.5M16 14v.5M11.25 16.25h1.5M12 17c-3 3-6 1-8 4h16c-2-3-5-1-8-4z"/></svg>
@@ -1744,6 +1794,36 @@
       </div>
     </div>
 
+    <!-- ===== RAÇÃO ===== -->
+    <div id="tab-racao" class="tab-content">
+      <div class="section-header">
+        <div class="section-title">Controle de Ração</div>
+        <button class="btn-action" onclick="abrirModalRacao()">+ Registrar Ração</button>
+      </div>
+
+      <!-- Alerta global -->
+      <div id="racaoAlerta" style="display:none;margin-bottom:1.5rem;"></div>
+
+      <!-- Stats -->
+      <div class="stats-grid" id="racaoStats" style="margin-bottom:1.5rem;"></div>
+
+      <!-- Cards de ração -->
+      <div class="racao-grid" id="racaoGrid"></div>
+
+      <!-- Histórico de entradas (admin) -->
+      <div class="admin-only" id="racaoLogSection">
+        <div class="admin-panel" style="margin-top:1rem">
+          <div class="admin-label">⚡ Histórico Completo de Entradas de Ração</div>
+          <div class="data-table-wrap" style="margin:0">
+            <table class="data-table">
+              <thead><tr><th>Data</th><th>Ração</th><th>Sacas</th><th>Peso/Saca</th><th>Total</th><th>Dura até</th><th>Registrado por</th></tr></thead>
+              <tbody id="racaoLogBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ===== CÃES ===== -->
     <div id="tab-caes" class="tab-content">
       <div class="section-header">
@@ -1921,6 +2001,45 @@
         </div>
       </div>
 
+      <div class="modal-section-label">Coleira Carrapaticida</div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr">
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Possui coleira?</label>
+          <select class="form-select" id="caoColeira">
+            <option value="Sim">Sim</option>
+            <option value="Não">Não</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Data de Colocação</label>
+          <input type="date" class="form-input" id="caoColeiraDt" />
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Próxima Troca</label>
+          <input type="date" class="form-input" id="caoColeiraTroca" />
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Marca / Tipo</label>
+          <input type="text" class="form-input" id="caoColeiraMarca" placeholder="Ex: Scalibor, Seresto..." />
+        </div>
+      </div>
+
+      <div class="modal-section-label">Carrapaticida (banho/aplicação)</div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr">
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Última aplicação</label>
+          <input type="date" class="form-input" id="caoCarrapDt" />
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Próxima aplicação</label>
+          <input type="date" class="form-input" id="caoCarrapProx" />
+        </div>
+        <div class="form-group" style="margin:0;grid-column:1/-1">
+          <label class="form-label">Produto utilizado</label>
+          <input type="text" class="form-input" id="caoCarrapProd" placeholder="Ex: Frontline Plus, Bravecto..." />
+        </div>
+      </div>
+
       <div class="modal-section-label">Vermífugo</div>
       <div class="form-grid" style="grid-template-columns:1fr 1fr">
         <div class="form-group" style="margin:0">
@@ -2005,6 +2124,76 @@
   </div>
 </div>
 
+
+<!-- ===== MODAL RAÇÃO ===== -->
+<div class="modal-dog-overlay" id="modalRacao">
+  <div class="modal-dog-box" style="max-width:520px">
+    <div class="modal-dog-header">
+      <div class="modal-dog-title" id="modalRacaoTitle">Registrar Entrada de Ração</div>
+      <button class="modal-close" onclick="fecharModalRacao()">✕</button>
+    </div>
+    <div class="modal-dog-body">
+      <div class="modal-section-label">Identificação</div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr">
+        <div class="form-group" style="margin:0;grid-column:1/-1">
+          <label class="form-label">Nome / Tipo da Ração</label>
+          <input type="text" class="form-input" id="racaoNome" placeholder="Ex: Royal Canin Maxi Adult" />
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Quantidade de Sacas</label>
+          <input type="number" class="form-input" id="racaoSacas" min="1" value="1" />
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Peso por Saca (kg)</label>
+          <input type="number" class="form-input" id="racaoPeso" min="0.1" step="0.1" value="15" />
+        </div>
+      </div>
+      <div class="modal-section-label">Duração</div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr">
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Data de Recebimento</label>
+          <input type="date" class="form-input" id="racaoDataReceb" />
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Dura até (previsão)</label>
+          <input type="date" class="form-input" id="racaoDataFim" />
+        </div>
+      </div>
+      <div class="modal-section-label">Observação <span style="color:var(--text-muted);font-size:0.75rem;font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></div>
+      <textarea class="training-desc" id="racaoObs" placeholder="Ex: Lote 2024-B, fornecedor XYZ..." style="min-height:52px;margin-top:0"></textarea>
+    </div>
+    <div class="modal-dog-footer">
+      <button class="btn-danger-sm" onclick="fecharModalRacao()" style="padding:0.55rem 1.2rem">Cancelar</button>
+      <button class="btn-action" onclick="salvarRacao()">✔ Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL CONSUMO RAÇÃO ===== -->
+<div class="modal-dog-overlay" id="modalConsumoRacao">
+  <div class="modal-dog-box" style="max-width:420px">
+    <div class="modal-dog-header">
+      <div class="modal-dog-title">Registrar Consumo</div>
+      <button class="modal-close" onclick="fecharModalConsumo()">✕</button>
+    </div>
+    <div class="modal-dog-body">
+      <div style="font-family:'Rajdhani';font-size:1rem;font-weight:700;color:var(--silver);margin-bottom:1rem" id="consumoRacaoNome">—</div>
+      <div class="form-group">
+        <label class="form-label">Sacas consumidas</label>
+        <input type="number" class="form-input" id="consumoSacas" min="1" value="1" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descrição <span style="color:var(--text-muted)">(opcional)</span></label>
+        <input type="text" class="form-input" id="consumoDesc" placeholder="Ex: Consumo semanal dos 4 cães" />
+      </div>
+    </div>
+    <div class="modal-dog-footer">
+      <button class="btn-danger-sm" onclick="fecharModalConsumo()" style="padding:0.55rem 1.2rem">Cancelar</button>
+      <button class="btn-action" onclick="confirmarConsumo()">✔ Registrar Consumo</button>
+    </div>
+  </div>
+</div>
+
 </div><!-- /app -->
 <script>
 // ====== USUÁRIOS ======
@@ -2054,6 +2243,7 @@ let state = {
   medicamentos: [],
   treinos: [],
   caes: [],
+  racao: [],
   log: [],
   notifQueue: [],
 };
@@ -2087,6 +2277,7 @@ async function loadData() {
     state.medicamentos = d.medicamentos || [];
     state.treinos      = d.treinos      || [];
     state.caes         = d.caes         || [];
+    state.racao        = d.racao        || [];
     state.log          = d.log          || [];
     salvarLocal();
     showSyncStatus('ok', 'SINCRONIZADO');
@@ -2119,6 +2310,7 @@ function carregarLocal() {
     state.medicamentos = d.medicamentos || [];
     state.treinos      = d.treinos      || [];
     state.caes         = d.caes         || [];
+    state.racao        = d.racao        || [];
     state.log          = d.log          || [];
   } catch(e) {}
 }
@@ -2142,6 +2334,7 @@ async function saveData() {
       medicamentos: state.medicamentos,
       treinos:      state.treinos,
       caes:         state.caes,
+      racao:        state.racao,
       log:          state.log.slice(0, 500),
     };
     const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
@@ -2360,6 +2553,7 @@ function switchTab(tab) {
   if(tab === 'dashboard') renderDashboard();
   if(tab === 'log')       renderLog();
   if(tab === 'caes')      renderCaes();
+  if(tab === 'racao')     renderRacao();
 }
 
 // ====== RENDER ALL ======
@@ -2369,6 +2563,7 @@ function renderAll() {
   renderFarmacia();
   renderTreino();
   renderCaes();
+  renderRacao();
   if(state.currentUser?.role === 'admin') renderLog();
 }
 
@@ -2948,6 +3143,11 @@ function confirmarRemocao() {
     addLog(`REMOÇÃO TOTAL — Medicamento "${m.nome}" | Motivo: ${motivo}`);
     state.medicamentos=state.medicamentos.filter(x=>String(x.id)!==String(id));
     fecharModalRemove(); renderFarmacia(); renderDashboard();
+  } else if(tipo==='racao'){
+    const r=state.racao.find(x=>String(x.id)===String(id)); if(!r) return;
+    addLog(`REMOÇÃO TOTAL — Ração "${r.nome}" | Motivo: ${motivo}`);
+    state.racao=state.racao.filter(x=>String(x.id)!==String(id));
+    fecharModalRemove(); renderRacao(); renderDashboard();
   }
 }
 
@@ -2994,6 +3194,13 @@ function abrirModalCao(id) {
     document.getElementById('caoPeso').value           = c.peso||'';
     document.getElementById('caoSexo').value           = c.sexo||'Macho';
     document.getElementById('caoNasc').value           = c.nasc||'';
+    document.getElementById('caoColeira').value       = c.coleira||'Não';
+    document.getElementById('caoColeiraDt').value      = c.coleiraDt||'';
+    document.getElementById('caoColeiraTroca').value   = c.coleiraTroca||'';
+    document.getElementById('caoColeiraMarca').value   = c.coleiraMarca||'';
+    document.getElementById('caoCarrapDt').value       = c.carrapDt||'';
+    document.getElementById('caoCarrapProx').value     = c.carrapProx||'';
+    document.getElementById('caoCarrapProd').value     = c.carrapProd||'';
     document.getElementById('caoOrigem').value         = c.origem||'';
     document.getElementById('caoChegada').value        = c.chegada||'';
     document.getElementById('caoRegistro').value       = c.registro||'';
@@ -3011,6 +3218,13 @@ function abrirModalCao(id) {
     document.getElementById('caoPeso').value='';
     document.getElementById('caoSexo').value='Macho';
     document.getElementById('caoNasc').value='';
+    document.getElementById('caoColeira').value='Não';
+    document.getElementById('caoColeiraDt').value='';
+    document.getElementById('caoColeiraTroca').value='';
+    document.getElementById('caoColeiraMarca').value='';
+    document.getElementById('caoCarrapDt').value='';
+    document.getElementById('caoCarrapProx').value='';
+    document.getElementById('caoCarrapProd').value='';
     document.getElementById('caoOrigem').value='';
     document.getElementById('caoChegada').value='';
     document.getElementById('caoRegistro').value='';
@@ -3069,6 +3283,13 @@ function salvarCao() {
   const peso          = parseFloat(document.getElementById('caoPeso').value)||0;
   const sexo          = document.getElementById('caoSexo').value;
   const nasc          = document.getElementById('caoNasc').value;
+  const coleira      = document.getElementById('caoColeira').value;
+  const coleiraDt    = document.getElementById('caoColeiraDt').value;
+  const coleiraTroca = document.getElementById('caoColeiraTroca').value;
+  const coleiraMarca = document.getElementById('caoColeiraMarca').value.trim();
+  const carrapDt     = document.getElementById('caoCarrapDt').value;
+  const carrapProx   = document.getElementById('caoCarrapProx').value;
+  const carrapProd   = document.getElementById('caoCarrapProd').value.trim();
   const origem        = document.getElementById('caoOrigem').value.trim();
   const chegada       = document.getElementById('caoChegada').value;
   const registro      = document.getElementById('caoRegistro').value.trim();
@@ -3100,13 +3321,14 @@ function salvarCao() {
     if(c.medDiaria!==medDiaria) changes.push('medicação diária atualizada');
     if(c.obs!==obs)             changes.push('observações atualizadas');
 
-    Object.assign(c,{nome,raca,condutor,peso,sexo,nasc,origem,chegada,registro,transferencias,vermifugo,vermData,vermProx,medDiaria,obs,vacinas});
+    Object.assign(c,{nome,raca,condutor,peso,sexo,nasc,origem,chegada,registro,transferencias,coleira,coleiraDt,coleiraTroca,coleiraMarca,carrapDt,carrapProx,carrapProd,vermifugo,vermData,vermProx,medDiaria,obs,vacinas});
     if(!c.historico) c.historico=[];
     if(changes.length) c.historico.unshift({time,autor:state.currentUser.username,acao:`Editado: ${changes.join(', ')}`});
     addLog(`Editou cadastro do cão "${nome}"`);
   } else {
     const cao = {
       id: getNextCaoId(), nome, raca, condutor, peso, sexo, nasc,
+      coleira, coleiraDt, coleiraTroca, coleiraMarca, carrapDt, carrapProx, carrapProd,
       origem, chegada, registro, transferencias,
       vermifugo, vermData, vermProx, medDiaria, obs, vacinas,
       historico: [{time, autor:state.currentUser.username, acao:`Cadastrado — Origem: ${origem||'não informada'}, chegada: ${chegada?formatDate(chegada):'não informada'}`}],
@@ -3212,6 +3434,20 @@ function renderCaes() {
           <span class="dog-info-label">Registro/Chip</span>
           <span class="dog-info-val" style="font-family:'Share Tech Mono',monospace;font-size:0.75rem">${c.registro}</span>
         </div>`:''}
+        ${c.coleira==='Sim'?`
+        <div class="dog-info-row">
+          <span class="dog-info-label">Coleira Carrap.</span>
+          <span>${c.coleiraMarca?`<span style="color:var(--text-secondary);font-size:0.78rem">${c.coleiraMarca}</span> `:''}
+          ${c.coleiraTroca?`<span class="badge ${Math.ceil((new Date(c.coleiraTroca)-new Date())/(1000*60*60*24))<=30?'badge-warn':'badge-good'}" style="font-size:0.6rem">Troca: ${formatDate(c.coleiraTroca)}</span>`:''}
+          </span>
+        </div>`:''}
+        ${c.carrapDt?`
+        <div class="dog-info-row">
+          <span class="dog-info-label">Carrapaticida</span>
+          <span style="font-size:0.78rem;color:var(--text-secondary)">${c.carrapProd||'—'} · ${formatDate(c.carrapDt)}
+          ${c.carrapProx?`<span class="badge ${Math.ceil((new Date(c.carrapProx)-new Date())/(1000*60*60*24))<=14?'badge-warn':'badge-good'}" style="font-size:0.58rem;margin-left:3px">Próx: ${formatDate(c.carrapProx)}</span>`:''}
+          </span>
+        </div>`:''}
         <div class="dog-info-row">
           <span class="dog-info-label">Vermífugo</span>
           <span>${c.vermifugo==='Sim'?`<span class="badge badge-good">Sim</span>`:`<span class="badge badge-danger">Não</span>`} ${vDias!==null?`<span class="badge ${vCls}" style="font-size:0.6rem">Próx: ${vLabel}</span>`:''}</span>
@@ -3287,6 +3523,251 @@ function confirmarExclusaoCao() {
 document.addEventListener('click', e=>{
   if(e.target.id==='modalCao')        fecharModalCao();
   if(e.target.id==='modalExcluirCao') fecharModalExcluirCao();
+});
+
+
+// ====== RAÇÃO ======
+let racaoModalId = null; // id da ração sendo consumida
+
+function getNextRacaoId() {
+  return state.racao.reduce((a,r)=>Math.max(a,r.id||0),0)+1;
+}
+
+function abrirModalRacao() {
+  racaoModalId = null;
+  document.getElementById('racaoNome').value = '';
+  document.getElementById('racaoSacas').value = '1';
+  document.getElementById('racaoPeso').value = '15';
+  document.getElementById('racaoObs').value = '';
+  // Default dates
+  const hoje = new Date().toISOString().split('T')[0];
+  document.getElementById('racaoDataReceb').value = hoje;
+  document.getElementById('racaoDataFim').value = '';
+  document.getElementById('modalRacao').classList.add('open');
+}
+
+function fecharModalRacao() {
+  document.getElementById('modalRacao').classList.remove('open');
+}
+
+function salvarRacao() {
+  const nome    = document.getElementById('racaoNome').value.trim();
+  const sacas   = parseInt(document.getElementById('racaoSacas').value)||1;
+  const peso    = parseFloat(document.getElementById('racaoPeso').value)||15;
+  const receb   = document.getElementById('racaoDataReceb').value;
+  const fim     = document.getElementById('racaoDataFim').value;
+  const obs     = document.getElementById('racaoObs').value.trim();
+
+  if(!nome||!receb||!fim) { alert('Preencha nome, data de recebimento e previsão de duração.'); return; }
+
+  const totalKg = sacas * peso;
+  const time = new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+
+  const item = {
+    id: getNextRacaoId(), nome, sacas, sacasAtual: sacas, peso, totalKg,
+    totalKgAtual: totalKg, receb, fim, obs,
+    autor: state.currentUser.username,
+    histConsumo: [],
+    criadoEm: time
+  };
+
+  state.racao.push(item);
+  addLog(`Registrou entrada de ração: ${nome} — ${sacas} sacas × ${peso}kg = ${totalKg}kg`);
+  fecharModalRacao();
+  renderRacao(); renderDashboard();
+}
+
+// ── Consumo ──
+function abrirModalConsumo(id) {
+  const r = state.racao.find(x=>String(x.id)===String(id));
+  if(!r) return;
+  racaoModalId = id;
+  document.getElementById('consumoRacaoNome').textContent = r.nome;
+  document.getElementById('consumoSacas').value = '1';
+  document.getElementById('consumoSacas').max = r.sacasAtual||r.sacas;
+  document.getElementById('consumoDesc').value = '';
+  document.getElementById('modalConsumoRacao').classList.add('open');
+}
+
+function fecharModalConsumo() {
+  document.getElementById('modalConsumoRacao').classList.remove('open');
+  racaoModalId = null;
+}
+
+function confirmarConsumo() {
+  const r = state.racao.find(x=>String(x.id)===String(racaoModalId));
+  if(!r) return;
+  const sacas = parseInt(document.getElementById('consumoSacas').value)||1;
+  const desc  = document.getElementById('consumoDesc').value.trim();
+
+  if(sacas > (r.sacasAtual||r.sacas)) {
+    alert(`Apenas ${r.sacasAtual||r.sacas} saca(s) disponível(is).`);
+    return;
+  }
+
+  r.sacasAtual  = (r.sacasAtual||r.sacas) - sacas;
+  r.totalKgAtual = r.sacasAtual * r.peso;
+
+  const time = new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+  if(!r.histConsumo) r.histConsumo = [];
+  r.histConsumo.unshift({ time, sacas, desc, autor: state.currentUser.username });
+
+  addLog(`Consumo de ração "${r.nome}": ${sacas} saca(s)${desc?' — '+desc:''}`);
+  fecharModalConsumo();
+  renderRacao(); renderDashboard();
+}
+
+// ── Nível / cor ──
+function getRacaoNivel(r) {
+  const total   = r.sacas || 1;
+  const atual   = r.sacasAtual ?? r.sacas;
+  const pct     = atual / total;
+  const diasFim = Math.ceil((new Date(r.fim) - new Date()) / (1000*60*60*24));
+
+  // Verde: >50% E mais de 14 dias
+  // Laranja: 20-50% OU 7-14 dias
+  // Vermelho: <20% OU menos de 7 dias
+  if(atual === 0 || diasFim < 0) return { cls:'vermelho', cor:'#e8407a', label:'SEM ESTOQUE', pct:0, diasFim };
+  if(pct > 0.5 && diasFim > 14)  return { cls:'verde',   cor:'#2ecc71', label:'ESTOQUE OK',  pct, diasFim };
+  if(pct > 0.2 && diasFim > 7)   return { cls:'laranja', cor:'#e8803a', label:'ATENÇÃO',      pct, diasFim };
+  return { cls:'vermelho', cor:'#e8407a', label:'CRÍTICO', pct, diasFim };
+}
+
+// ── Render ──
+function renderRacao() {
+  const grid    = document.getElementById('racaoGrid');
+  const statsEl = document.getElementById('racaoStats');
+  const alertEl = document.getElementById('racaoAlerta');
+  if(!grid) return;
+
+  const totalKgTotal  = state.racao.reduce((a,r)=>a+(r.totalKgAtual??r.totalKg),0);
+  const totalSacas    = state.racao.reduce((a,r)=>a+(r.sacasAtual??r.sacas),0);
+  const criticos      = state.racao.filter(r=>getRacaoNivel(r).cls==='vermelho').length;
+  const atencao       = state.racao.filter(r=>getRacaoNivel(r).cls==='laranja').length;
+
+  if(statsEl) {
+    statsEl.innerHTML = `
+      <div class="stat-card gold"><div class="stat-label">Tipos de Ração</div><div class="stat-value">${state.racao.length}</div><div class="stat-sub">cadastradas</div></div>
+      <div class="stat-card blue"><div class="stat-label">Sacas Disponíveis</div><div class="stat-value">${totalSacas}</div><div class="stat-sub">${totalKgTotal.toFixed(1)}kg total</div></div>
+      <div class="stat-card ${atencao?'warn':'green'}"><div class="stat-label">Atenção</div><div class="stat-value">${atencao}</div><div class="stat-sub">quase acabando</div></div>
+      <div class="stat-card ${criticos?'red':'green'}"><div class="stat-label">Crítico</div><div class="stat-value">${criticos}</div><div class="stat-sub">sem estoque / vencido</div></div>
+    `;
+  }
+
+  // Alerta no topo
+  const alertas = state.racao.filter(r=>['laranja','vermelho'].includes(getRacaoNivel(r).cls));
+  if(alertEl) {
+    if(alertas.length) {
+      alertEl.style.display = 'block';
+      alertEl.innerHTML = alertas.map(r=>{
+        const n = getRacaoNivel(r);
+        const bg = n.cls==='vermelho'?'rgba(232,64,122,0.1)':'rgba(232,128,58,0.1)';
+        const bc = n.cls==='vermelho'?'rgba(232,64,122,0.4)':'rgba(232,128,58,0.4)';
+        const ic = n.cls==='vermelho'?'🔴':'🟠';
+        return `<div style="background:${bg};border:1px solid ${bc};border-radius:2px;padding:0.5rem 1rem;margin-bottom:0.4rem;font-size:0.8rem;color:${n.cor};display:flex;align-items:center;gap:0.5rem">
+          ${ic} <strong>${r.nome}</strong> — ${n.label} · ${r.sacasAtual??r.sacas} saca(s) restante(s) · ${n.diasFim>0?n.diasFim+'d restantes':'PRAZO VENCIDO'}
+        </div>`;
+      }).join('');
+    } else {
+      alertEl.style.display = 'none';
+    }
+  }
+
+  if(!state.racao.length) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;padding:3rem">Nenhuma ração cadastrada. Clique em "+ Registrar Ração" para começar.</div>';
+  } else {
+    grid.innerHTML = state.racao.map(r=>{
+      const n        = getRacaoNivel(r);
+      const atual    = r.sacasAtual ?? r.sacas;
+      const pctBar   = Math.round(n.pct*100);
+      const hist     = r.histConsumo||[];
+      const histHtml = hist.length
+        ? hist.slice(0,5).map(c=>`<div class="desgaste-entry">
+            <span class="desgaste-time">${c.time}</span>
+            <span style="color:var(--text-primary);font-weight:600;min-width:40px">${c.sacas}x</span>
+            <span style="color:var(--text-secondary);flex:1">${c.desc||'—'}</span>
+            <span style="color:var(--cyan);font-size:0.68rem">${getNomeUsuario(c.autor)}</span>
+          </div>`).join('')
+        : '<div style="color:var(--text-muted);font-size:0.75rem">Nenhum consumo registrado.</div>';
+
+      return `
+      <div class="racao-card ${n.cls}">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:0.5rem">
+          <div>
+            <div class="racao-nome">${r.nome}</div>
+            <div style="font-size:0.7rem;color:var(--text-muted);margin-top:2px">
+              ${r.sacas} sacas × ${r.peso}kg = ${r.totalKg}kg total
+            </div>
+          </div>
+          <span class="badge" style="background:${n.cor}22;color:${n.cor};border:1px solid ${n.cor}55;font-size:0.6rem">${n.label}</span>
+        </div>
+
+        <!-- Barra de nível -->
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
+          <div class="racao-nivel" style="flex:1">
+            <div class="racao-nivel-bar" style="width:${pctBar}%;background:${n.cor}"></div>
+          </div>
+          <span style="font-family:'Rajdhani',sans-serif;font-size:0.85rem;font-weight:700;color:${n.cor};min-width:30px">${pctBar}%</span>
+        </div>
+
+        <!-- Info -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.4rem;margin-bottom:0.75rem">
+          <div style="text-align:center;background:rgba(26,40,60,0.4);border:1px solid var(--border);border-radius:2px;padding:0.4rem">
+            <div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;font-family:'Rajdhani',sans-serif">Sacas</div>
+            <div style="font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:700;color:${n.cor}">${atual}</div>
+          </div>
+          <div style="text-align:center;background:rgba(26,40,60,0.4);border:1px solid var(--border);border-radius:2px;padding:0.4rem">
+            <div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;font-family:'Rajdhani',sans-serif">Total kg</div>
+            <div style="font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:700;color:var(--text-primary)">${(atual*r.peso).toFixed(0)}</div>
+          </div>
+          <div style="text-align:center;background:rgba(26,40,60,0.4);border:1px solid var(--border);border-radius:2px;padding:0.4rem">
+            <div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;font-family:'Rajdhani',sans-serif">Dias</div>
+            <div style="font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:700;color:${n.diasFim>0?'var(--text-primary)':'#e8407a'}">${n.diasFim>0?n.diasFim:'0'}</div>
+          </div>
+        </div>
+
+        <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.75rem">
+          Recebido: <span style="color:var(--text-secondary)">${formatDate(r.receb)}</span> &nbsp;·&nbsp;
+          Dura até: <span style="color:${n.cor}">${formatDate(r.fim)}</span>
+          ${r.obs?`<br><span style="color:var(--text-muted)">${r.obs}</span>`:''}
+        </div>
+
+        <!-- Histórico consumo -->
+        ${hist.length?`
+        <div style="border-top:1px solid var(--border);padding-top:0.6rem;margin-bottom:0.75rem">
+          <div style="font-family:'Rajdhani';font-size:0.65rem;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.35rem">Histórico de Consumo</div>
+          ${histHtml}
+        </div>`:''}
+
+        <div style="display:flex;gap:0.5rem">
+          <button class="btn-action" style="flex:1;padding:0.4rem" onclick="abrirModalConsumo('${r.id}')">↓ Registrar Consumo</button>
+          ${state.currentUser?.role==='admin'?`<button class="btn-danger-sm" onclick="abrirModalRemove('racao','${r.id}','${r.nome.replace(/'/g,'')}')">Remover</button>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Admin log
+  const logBody = document.getElementById('racaoLogBody');
+  if(logBody && state.currentUser?.role==='admin') {
+    logBody.innerHTML = state.racao.length
+      ? state.racao.map(r=>`<tr>
+          <td style="font-family:'Share Tech Mono',monospace;font-size:0.75rem">${r.criadoEm||'—'}</td>
+          <td><strong>${r.nome}</strong></td>
+          <td>${r.sacas}</td>
+          <td>${r.peso}kg</td>
+          <td><strong>${r.totalKg}kg</strong></td>
+          <td style="color:${getRacaoNivel(r).cor}">${formatDate(r.fim)}</td>
+          <td style="color:var(--cyan);font-size:0.78rem">${getNomeUsuario(r.autor)}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="7" class="empty-state">Nenhuma entrada registrada</td></tr>';
+  }
+}
+
+// Close ração modals
+document.addEventListener('click', e => {
+  if(e.target.id==='modalRacao')        fecharModalRacao();
+  if(e.target.id==='modalConsumoRacao') fecharModalConsumo();
 });
 
 // Fechar modais clicando fora
