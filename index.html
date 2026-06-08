@@ -3739,9 +3739,12 @@ function renderRacao() {
           ${histHtml}
         </div>`:''}
 
-        <div style="display:flex;gap:0.5rem">
-          <button class="btn-action" style="flex:1;padding:0.4rem" onclick="abrirModalConsumo('${r.id}')">↓ Registrar Consumo</button>
-          ${state.currentUser?.role==='admin'?`<button class="btn-danger-sm" onclick="abrirModalRemove('racao','${r.id}','${r.nome.replace(/'/g,'')}')">Remover</button>`:''}
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          ${atual > 0
+            ? `<button class="btn-action" style="flex:1;padding:0.4rem;min-width:140px" onclick="abrirModalConsumo('${r.id}')">↓ Registrar Consumo</button>`
+            : `<button class="btn-action" style="flex:1;padding:0.4rem;min-width:140px;opacity:0.4;cursor:not-allowed" disabled>Sem estoque</button>`
+          }
+          <button class="btn-danger-sm" style="padding:0.4rem 0.75rem" onclick="abrirModalRemove('racao','${r.id}','${r.nome.replace(/'/g,'')}')">🗑 Remover</button>
         </div>
       </div>`;
     }).join('');
