@@ -2194,6 +2194,40 @@
   </div>
 </div>
 
+
+<!-- ===== MODAL ADICIONAR QUANTIDADE AO MATERIAL ===== -->
+<div class="modal-dog-overlay" id="modalAddQtd">
+  <div class="modal-dog-box" style="max-width:460px">
+    <div class="modal-dog-header">
+      <div class="modal-dog-title">Adicionar Quantidade</div>
+      <button class="modal-close" onclick="fecharModalAddQtd()">✕</button>
+    </div>
+    <div class="modal-dog-body">
+      <div style="font-family:'Rajdhani';font-size:1rem;font-weight:700;color:var(--silver);margin-bottom:0.25rem" id="addQtdNome">—</div>
+      <div id="addQtdDistAtual" style="margin-bottom:1rem"></div>
+
+      <label class="form-label">Quantidade a Adicionar</label>
+      <input type="number" class="form-input" id="addQtdValor" min="1" value="1" style="margin-bottom:0.75rem" />
+
+      <label class="form-label">Condição das Unidades Novas</label>
+      <select class="form-select" id="addQtdCond" style="margin-bottom:0.75rem">
+        <option value="Excelente">Excelente</option>
+        <option value="Bom">Bom</option>
+        <option value="Regular">Regular</option>
+        <option value="Crítico">Crítico</option>
+        <option value="Inutilizável">Inutilizável</option>
+      </select>
+
+      <label class="form-label">Observação <span style="color:var(--text-muted)">(opcional)</span></label>
+      <input type="text" class="form-input" id="addQtdObs" placeholder="Ex: Novo lote recebido em 01/06/2026..." />
+    </div>
+    <div class="modal-dog-footer">
+      <button class="btn-danger-sm" onclick="fecharModalAddQtd()" style="padding:0.55rem 1.2rem">Cancelar</button>
+      <button class="btn-action" onclick="confirmarAddQtd()">+ Adicionar ao Estoque</button>
+    </div>
+  </div>
+</div>
+
 </div><!-- /app -->
 <script>
 // ====== USUÁRIOS ======
@@ -2739,9 +2773,13 @@ function renderMaterial() {
     tbody.innerHTML = state.materiais.map(m=>{
       const hist = m.histDesgaste||[];
       const histRows = hist.length
-        ? hist.map(h=>`<div class="desgaste-entry">
+        ? hist.map(h=>`<div class="desgaste-entry" style="${h.tipo==='entrada'?'border-left:2px solid #2ecc71;padding-left:6px;':''}">
             <span class="desgaste-time">${h.time}</span>
-            <span style="min-width:74px;display:inline-flex;gap:3px;align-items:center">${h.qtd?`<strong style="color:var(--text-primary)">${h.qtd}x</strong>`:''} ${badgeCond(h.condDe||h.cond)} <span style="color:var(--text-muted)">→</span> ${badgeCond(h.condPara||h.cond)}</span>
+            ${h.tipo==='entrada'
+              ? `<span style="color:#4eda80;font-size:0.72rem;font-weight:600;min-width:60px">+${h.qtd}x ENTRADA</span>
+                 <span class="badge badge-good" style="font-size:0.6rem">${h.condPara}</span>`
+              : `<span style="min-width:74px;display:inline-flex;gap:3px;align-items:center">${h.qtd?`<strong style="color:var(--text-primary)">${h.qtd}x</strong>`:''} ${badgeCond(h.condDe||h.cond)} <span style="color:var(--text-muted)">→</span> ${badgeCond(h.condPara||h.cond)}</span>`
+            }
             <span style="color:var(--text-secondary);flex:1;padding:0 8px">${h.obs||'—'}</span>
             <span style="color:var(--text-muted);font-size:0.68rem;white-space:nowrap">${getNomeUsuario(h.autor)}</span>
           </div>`).join('')
@@ -2766,6 +2804,7 @@ function renderMaterial() {
         <td>${condBar(m.condQtd,m.qtd)}</td>
         <td style="color:var(--text-muted);font-size:0.78rem">${getNomeUsuario(m.autor)}</td>
         <td onclick="event.stopPropagation()">
+          <button class="btn-edit-sm" onclick="abrirModalAddQtd('${m.id}')" style="background:rgba(26,122,61,0.15);border-color:rgba(26,122,61,0.4);color:#4eda80">+ Qtd</button>
           <button class="btn-edit-sm" onclick="abrirModal('${m.id}')">✎ Condição</button>
           ${state.currentUser?.role==='admin'?`<button class="btn-danger-sm" onclick="deleteMaterial('${m.id}')">Remover</button>`:''}
         </td>
@@ -2774,7 +2813,7 @@ function renderMaterial() {
         <td colspan="5" style="padding:0.75rem 1rem 1rem 1.5rem;background:rgba(5,15,31,0.5);border-bottom:1px solid rgba(100,160,220,0.06)">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
             <div>
-              <div style="font-family:'Rajdhani';font-size:0.68rem;color:var(--gold-dim);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.5rem">🔧 Histórico de Desgaste</div>
+              <div style="font-family:'Rajdhani';font-size:0.68rem;color:var(--gold-dim);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.5rem">🔧 Histórico de Desgaste / Entradas</div>
               ${histRows}
             </div>
             <div>
@@ -3773,10 +3812,77 @@ document.addEventListener('click', e => {
   if(e.target.id==='modalConsumoRacao') fecharModalConsumo();
 });
 
+
+// ====== ADICIONAR QUANTIDADE AO MATERIAL ======
+let addQtdMatId = null;
+
+function abrirModalAddQtd(id) {
+  const m = state.materiais.find(x=>String(x.id)===String(id));
+  if(!m) return;
+  addQtdMatId = id;
+  document.getElementById('addQtdNome').textContent = m.nome;
+  document.getElementById('addQtdValor').value = '1';
+  document.getElementById('addQtdCond').value = 'Excelente';
+  document.getElementById('addQtdObs').value = '';
+
+  // Mostra distribuição atual
+  const COLORS = {Excelente:'#2ecc71',Bom:'#1a9fd4',Regular:'#e8c97a',Crítico:'#e8803a',Inutilizável:'#e8407a'};
+  const CONDS  = ['Excelente','Bom','Regular','Crítico','Inutilizável'];
+  let distHtml = '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px">';
+  CONDS.forEach(c => {
+    const q = m.condQtd?.[c]||0;
+    if(!q) return;
+    distHtml += `<span class="badge" style="background:${COLORS[c]}22;color:${COLORS[c]};border:1px solid ${COLORS[c]}44;font-size:0.65rem">${c}: ${q}</span>`;
+  });
+  distHtml += `</div><div style="font-size:0.72rem;color:var(--text-muted)">Total atual: <strong style="color:var(--text-primary)">${m.qtd} unidades</strong></div>`;
+  document.getElementById('addQtdDistAtual').innerHTML = distHtml;
+
+  document.getElementById('modalAddQtd').classList.add('open');
+}
+
+function fecharModalAddQtd() {
+  document.getElementById('modalAddQtd').classList.remove('open');
+  addQtdMatId = null;
+}
+
+function confirmarAddQtd() {
+  const m = state.materiais.find(x=>String(x.id)===String(addQtdMatId));
+  if(!m) return;
+
+  const qtd  = parseInt(document.getElementById('addQtdValor').value)||1;
+  const cond = document.getElementById('addQtdCond').value;
+  const obs  = document.getElementById('addQtdObs').value.trim();
+
+  if(qtd < 1) { alert('Informe uma quantidade válida.'); return; }
+
+  // Atualiza condQtd
+  if(!m.condQtd) m.condQtd = {Excelente:0,Bom:0,Regular:0,'Crítico':0,'Inutilizável':0};
+  m.condQtd[cond] = (m.condQtd[cond]||0) + qtd;
+
+  // Atualiza totais
+  m.qtd = Object.values(m.condQtd).reduce((a,v)=>a+v, 0);
+  m.disponivel = (m.condQtd.Excelente||0)+(m.condQtd.Bom||0)+(m.condQtd.Regular||0)+(m.condQtd['Crítico']||0);
+
+  // Registra no histórico de desgaste como entrada
+  if(!m.histDesgaste) m.histDesgaste = [];
+  const time = new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+  m.histDesgaste.unshift({
+    time, qtd, condDe: '—', condPara: cond,
+    obs: obs || `Entrada de ${qtd}x (${cond})`,
+    autor: state.currentUser.username,
+    tipo: 'entrada'
+  });
+
+  addLog(`Adicionou ${qtd}x ao material "${m.nome}" (${cond})${obs?' — '+obs:''}`);
+  fecharModalAddQtd();
+  renderMaterial(); renderDashboard();
+}
+
 // Fechar modais clicando fora
 document.addEventListener('click', e=>{
   if(e.target.id==='modalCond')        fecharModal();
   if(e.target.id==='modalRemove')      fecharModalRemove();
+  if(e.target.id==='modalAddQtd')      fecharModalAddQtd();
   // dog modals handled in DOG_JS block above
 });
 </script>
