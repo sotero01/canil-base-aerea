@@ -2428,10 +2428,10 @@ async function saveData() {
       usuarios:     usersStored ? JSON.parse(usersStored) : {},
       log:          state.log.slice(0, 500),
     };
-    const res = await fetch(\`https://api.github.com/gists/\${GIST_ID}\`, {
+    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
       method: 'PATCH',
       headers: {
-        'Authorization': \`token \${GIST_TOKEN}\`,
+        'Authorization': `token ${GIST_TOKEN}`,
         'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json',
       },
