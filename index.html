@@ -2074,6 +2074,42 @@
         <textarea class="training-desc" id="caoObs" placeholder="Ex: Alergia a proteína de frango, não expor a temperaturas acima de 35°C..." style="min-height:64px;margin-top:0;"></textarea>
       </div>
 
+      <!-- CARTEIRA DE VACINAÇÃO -->
+      <div class="modal-section-label">
+        💉 Carteira de Vacinação
+        <span style="color:var(--text-muted);font-size:0.7rem;font-weight:400;text-transform:none;letter-spacing:0"> — PDF ou imagem</span>
+      </div>
+      <div id="docListVacina" style="margin-bottom:0.5rem"></div>
+      <label style="cursor:pointer;display:inline-flex;align-items:center;gap:0.4rem;background:rgba(26,122,61,0.12);border:1px dashed rgba(26,122,61,0.4);border-radius:2px;padding:0.4rem 0.85rem;font-family:'Rajdhani',sans-serif;font-size:0.78rem;font-weight:600;color:#4eda80;letter-spacing:0.08em;transition:all 0.2s;margin-bottom:1rem">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Anexar Carteira de Vacinação
+        <input type="file" id="caoDocVacina" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="anexarDoc(this,'vacina')" />
+      </label>
+
+      <!-- EXAMES / DOCUMENTAÇÃO CLÍNICA -->
+      <div class="modal-section-label">
+        🩺 Exames & Documentação Clínica
+        <span style="color:var(--text-muted);font-size:0.7rem;font-weight:400;text-transform:none;letter-spacing:0"> — resultados, laudos</span>
+      </div>
+      <div id="docListExames" style="margin-bottom:0.5rem"></div>
+      <label style="cursor:pointer;display:inline-flex;align-items:center;gap:0.4rem;background:rgba(26,100,159,0.15);border:1px dashed rgba(26,159,212,0.35);border-radius:2px;padding:0.4rem 0.85rem;font-family:'Rajdhani',sans-serif;font-size:0.78rem;font-weight:600;color:var(--cyan);letter-spacing:0.08em;transition:all 0.2s;margin-bottom:1rem">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Anexar Exame / Laudo
+        <input type="file" id="caoDocExame" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display:none" onchange="anexarDoc(this,'exame')" />
+      </label>
+
+      <!-- OBSERVAÇÕES / OUTROS DOCUMENTOS -->
+      <div class="modal-section-label">
+        📋 Outros Documentos & Observações
+        <span style="color:var(--text-muted);font-size:0.7rem;font-weight:400;text-transform:none;letter-spacing:0"> — relatórios, ocorrências</span>
+      </div>
+      <div id="docListObs" style="margin-bottom:0.5rem"></div>
+      <label style="cursor:pointer;display:inline-flex;align-items:center;gap:0.4rem;background:rgba(184,134,11,0.1);border:1px dashed rgba(201,168,76,0.35);border-radius:2px;padding:0.4rem 0.85rem;font-family:'Rajdhani',sans-serif;font-size:0.78rem;font-weight:600;color:var(--gold);letter-spacing:0.08em;transition:all 0.2s;margin-bottom:0.5rem">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Anexar Documento / Observação
+        <input type="file" id="caoDocOutro" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display:none" onchange="anexarDoc(this,'outro')" />
+      </label>
+
     </div>
     <div class="modal-dog-footer">
       <button class="btn-danger-sm" onclick="fecharModalCao()" style="padding:0.55rem 1.2rem;font-size:0.82rem;">Cancelar</button>
@@ -2313,6 +2349,11 @@ async function loadData() {
     state.caes         = d.caes         || [];
     state.racao        = d.racao        || [];
     state.log          = d.log          || [];
+    // Carrega usuários do Gist (sincronizados entre dispositivos)
+    if(d.usuarios) {
+      const stored = d.usuarios;
+      localStorage.setItem('canil_users', JSON.stringify(stored));
+    }
     salvarLocal();
     showSyncStatus('ok', 'SINCRONIZADO');
     renderAll();
@@ -2327,9 +2368,12 @@ async function loadData() {
 // ── localStorage helpers ──
 function salvarLocal() {
   try {
+    const usersStored = localStorage.getItem('canil_users');
     const payload = {
       materiais: state.materiais, medicamentos: state.medicamentos,
-      treinos: state.treinos, caes: state.caes, log: state.log.slice(0,200)
+      treinos: state.treinos, caes: state.caes, racao: state.racao,
+      usuarios: usersStored ? JSON.parse(usersStored) : {},
+      log: state.log.slice(0,200)
     };
     localStorage.setItem('canil_data', JSON.stringify(payload));
   } catch(e) {}
@@ -2346,6 +2390,7 @@ function carregarLocal() {
     state.caes         = d.caes         || [];
     state.racao        = d.racao        || [];
     state.log          = d.log          || [];
+    if(d.usuarios) localStorage.setItem('canil_users', JSON.stringify(d.usuarios));
   } catch(e) {}
 }
 
@@ -2363,12 +2408,15 @@ async function saveData() {
   _saving = true;
   showSyncStatus('syncing', 'SALVANDO...');
   try {
+    // Inclui usuários no payload para sincronizar entre dispositivos
+    const usersStored = localStorage.getItem('canil_users');
     const payload = {
       materiais:    state.materiais,
       medicamentos: state.medicamentos,
       treinos:      state.treinos,
       caes:         state.caes,
       racao:        state.racao,
+      usuarios:     usersStored ? JSON.parse(usersStored) : {},
       log:          state.log.slice(0, 500),
     };
     const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
@@ -2498,6 +2546,8 @@ function doCadastro() {
     graduacao: grad
   };
   saveUsers(users);
+  // Sincroniza novo usuário com o Gist imediatamente
+  saveData();
 
   // Limpa campos
   document.getElementById('cadUser').value = '';
@@ -2506,6 +2556,7 @@ function doCadastro() {
   document.getElementById('cadSenha').value = '';
   document.getElementById('cadSenha2').value = '';
   ok.style.display = 'block';
+  ok.textContent = '✔ Conta criada! Você já pode fazer login.';
 }
 
 // ====== AUTH ======
@@ -2522,6 +2573,8 @@ function doLogin() {
     return;
   }
   err.style.display = 'none';
+  // Salva sessão para auto-login
+  localStorage.setItem('canil_session', JSON.stringify({ u, p }));
   state.currentUser = { ...userData, username: u };
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('mainApp').style.display = 'block';
@@ -2543,10 +2596,39 @@ function doLogin() {
   loadData();
 }
 
+function tentarAutoLogin() {
+  try {
+    const sess = localStorage.getItem('canil_session');
+    if(!sess) return false;
+    const { u, p } = JSON.parse(sess);
+    const users = getUsers();
+    const userData = users[u];
+    if(!userData || userData.pass !== p) { localStorage.removeItem('canil_session'); return false; }
+    state.currentUser = { ...userData, username: u };
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    document.getElementById('headerName').textContent = userData.nome;
+    document.getElementById('headerRole').textContent = userData.graduacao || 'Militar';
+    document.querySelectorAll('.admin-only').forEach(el => {
+      el.style.display = userData.role === 'admin' ? (el.tagName === 'BUTTON' ? 'flex' : 'block') : 'none';
+    });
+    if(userData.role === 'admin') {
+      document.getElementById('tabLog').style.display = 'flex';
+      ['admTreinoSection','medLogAdmSection','matLogAdmSection','racaoLogSection'].forEach(id=>{
+        const el=document.getElementById(id); if(el) el.style.display='block';
+      });
+    }
+    startClock();
+    loadData();
+    return true;
+  } catch(e) { localStorage.removeItem('canil_session'); return false; }
+}
+
 function doLogout() {
+  localStorage.removeItem('canil_session');
   state.currentUser = null;
   state.materiais = []; state.medicamentos = [];
-  state.treinos = []; state.caes = []; state.log = [];
+  state.treinos = []; state.caes = []; state.racao = []; state.log = [];
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('mainApp').style.display = 'none';
   document.getElementById('loginUser').value = '';
@@ -3275,6 +3357,26 @@ function abrirModalCao(id) {
     document.getElementById('caoObs').value='';
   }
   renderVaccList();
+  // Carrega docs existentes por categoria
+  caoDocsTemp = { vacina: [], exame: [], outro: [] };
+  if(isEdit) {
+    const c = state.caes.find(x=>String(x.id)===String(id));
+    if(c && c.docs) {
+      // Suporta formato antigo (array) e novo (objeto)
+      if(Array.isArray(c.docs)) {
+        c.docs.forEach(d => {
+          const cat = d.categoria||'outro';
+          if(!caoDocsTemp[cat]) caoDocsTemp[cat]=[];
+          caoDocsTemp[cat].push(d);
+        });
+      } else {
+        caoDocsTemp.vacina = [...(c.docs.vacina||[])];
+        caoDocsTemp.exame  = [...(c.docs.exame||[])];
+        caoDocsTemp.outro  = [...(c.docs.outro||[])];
+      }
+    }
+  }
+  ['vacina','exame','outro'].forEach(c => renderDocListCategoria(c));
   document.getElementById('modalCao').classList.add('open');
 }
 
@@ -3360,7 +3462,15 @@ function salvarCao() {
     if(c.medDiaria!==medDiaria) changes.push('medicação diária atualizada');
     if(c.obs!==obs)             changes.push('observações atualizadas');
 
-    Object.assign(c,{nome,raca,condutor,peso,sexo,nasc,origem,chegada,registro,transferencias,coleira,coleiraDt,coleiraTroca,coleiraMarca,carrapDt,carrapProx,carrapProd,vermifugo,vermData,vermProx,medDiaria,obs,vacinas});
+    // Merge docs por categoria, mantendo existentes
+    const docsAntes = c.docs || { vacina:[], exame:[], outro:[] };
+    const docsBase  = Array.isArray(docsAntes) ? { vacina:[], exame:[], outro:[] } : docsAntes;
+    const docsFinal = {
+      vacina: [...(docsBase.vacina||[]), ...(caoDocsTemp.vacina||[])],
+      exame:  [...(docsBase.exame||[]),  ...(caoDocsTemp.exame||[])],
+      outro:  [...(docsBase.outro||[]),  ...(caoDocsTemp.outro||[])],
+    };
+    Object.assign(c,{nome,raca,condutor,peso,sexo,nasc,origem,chegada,registro,transferencias,coleira,coleiraDt,coleiraTroca,coleiraMarca,carrapDt,carrapProx,carrapProd,vermifugo,vermData,vermProx,medDiaria,obs,vacinas,docs:docsFinal});
     if(!c.historico) c.historico=[];
     if(changes.length) c.historico.unshift({time,autor:state.currentUser.username,acao:`Editado: ${changes.join(', ')}`});
     addLog(`Editou cadastro do cão "${nome}"`);
@@ -3369,6 +3479,11 @@ function salvarCao() {
       id: getNextCaoId(), nome, raca, condutor, peso, sexo, nasc,
       coleira, coleiraDt, coleiraTroca, coleiraMarca, carrapDt, carrapProx, carrapProd,
       origem, chegada, registro, transferencias,
+      docs: {
+        vacina: [...(caoDocsTemp.vacina||[])],
+        exame:  [...(caoDocsTemp.exame||[])],
+        outro:  [...(caoDocsTemp.outro||[])],
+      },
       vermifugo, vermData, vermProx, medDiaria, obs, vacinas,
       historico: [{time, autor:state.currentUser.username, acao:`Cadastrado — Origem: ${origem||'não informada'}, chegada: ${chegada?formatDate(chegada):'não informada'}`}],
       criadoEm: new Date().toISOString()
@@ -3511,6 +3626,7 @@ function renderCaes() {
         <span>⚠</span>
         <span>${c.medDiaria?`<strong>Medicação:</strong> ${c.medDiaria}<br>`:''}${c.obs||''}</span>
       </div>`:''}
+      ${renderDocsCao(c.docs)}
       <div class="dog-card-footer">
         <button class="btn-edit-sm" onclick="abrirModalCao('${c.id}')" style="flex:1">✎ Editar</button>
         <button class="btn-danger-sm" onclick="abrirModalExcluirCao('${c.id}','${c.nome.replace(/'/g,'')}')">Excluir</button>
@@ -3877,6 +3993,105 @@ function confirmarAddQtd() {
   fecharModalAddQtd();
   renderMaterial(); renderDashboard();
 }
+
+
+// ====== DOCUMENTOS DOS CÃES ======
+// Temporários por categoria durante edição no modal
+let caoDocsTemp = { vacina: [], exame: [], outro: [] };
+
+const DOC_CAT = {
+  vacina: { label:'Carteira de Vacinação', icon:'💉', cor:'#4eda80',  listId:'docListVacina' },
+  exame:  { label:'Exames / Laudos',       icon:'🩺', cor:'#1a9fd4',  listId:'docListExames' },
+  outro:  { label:'Outros Documentos',     icon:'📋', cor:'#e8c97a',  listId:'docListObs'    },
+};
+
+function iconeDoc(tipo) {
+  if(!tipo) return '📎';
+  if(tipo.includes('pdf'))   return '📄';
+  if(tipo.includes('image')) return '🖼️';
+  return '📎';
+}
+
+function anexarDoc(input, categoria) {
+  const file = input.files[0];
+  if(!file) return;
+  if(file.size > 1.5 * 1024 * 1024) {
+    alert('Arquivo muito grande. Máximo 1.5MB por arquivo.');
+    input.value = ''; return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const doc = {
+      nome: file.name,
+      tipo: file.type,
+      data: e.target.result,
+      categoria,
+      adicionadoEm: new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}),
+      autor: state.currentUser?.username || '?'
+    };
+    if(!caoDocsTemp[categoria]) caoDocsTemp[categoria] = [];
+    caoDocsTemp[categoria].push(doc);
+    renderDocListCategoria(categoria);
+    input.value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderDocListCategoria(categoria) {
+  const cat = DOC_CAT[categoria];
+  const el  = document.getElementById(cat.listId);
+  if(!el) return;
+  const docs = caoDocsTemp[categoria] || [];
+  if(!docs.length) { el.innerHTML = ''; return; }
+  el.innerHTML = docs.map((d,i)=>`
+    <div style="display:flex;align-items:center;gap:0.5rem;padding:0.35rem 0.6rem;background:rgba(26,40,60,0.5);border:1px solid var(--border);border-radius:2px;margin-bottom:0.3rem;font-size:0.78rem">
+      <span>${iconeDoc(d.tipo)}</span>
+      <span style="flex:1;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.nome}</span>
+      <span style="color:var(--text-muted);font-size:0.63rem;white-space:nowrap">${d.adicionadoEm}</span>
+      <button onclick="removerDocTemp('${categoria}',${i})" style="background:transparent;border:none;color:#e8407a;cursor:pointer;font-size:0.9rem;padding:0 0.2rem;line-height:1">✕</button>
+    </div>`).join('');
+}
+
+function removerDocTemp(categoria, i) {
+  caoDocsTemp[categoria].splice(i, 1);
+  renderDocListCategoria(categoria);
+}
+
+// Render docs no card do cão (agrupados por categoria)
+function renderDocsCao(docs) {
+  if(!docs) return '';
+  // Suporta formato antigo (array) e novo (objeto por categoria)
+  let categorizado = { vacina:[], exame:[], outro:[] };
+  if(Array.isArray(docs)) {
+    docs.forEach(d => { const c = d.categoria||'outro'; if(!categorizado[c]) categorizado[c]=[]; categorizado[c].push(d); });
+  } else {
+    categorizado = docs;
+  }
+  const total = Object.values(categorizado).flat().length;
+  if(!total) return '';
+
+  let html = '<div style="margin-top:0.5rem;padding-top:0.5rem;border-top:1px solid rgba(100,160,220,0.06)">';
+  Object.entries(DOC_CAT).forEach(([cat, cfg]) => {
+    const lista = categorizado[cat] || [];
+    if(!lista.length) return;
+    html += `<div style="margin-bottom:0.5rem">
+      <div style="font-family:'Rajdhani';font-size:0.63rem;color:${cfg.cor};letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.3rem">${cfg.icon} ${cfg.label}</div>
+      ${lista.map(d=>`
+        <div style="display:flex;align-items:center;gap:0.5rem;padding:0.28rem 0;border-bottom:1px solid rgba(100,160,220,0.04)">
+          <span style="font-size:0.9rem">${iconeDoc(d.tipo)}</span>
+          <a href="${d.data}" download="${d.nome}" style="color:var(--cyan);font-size:0.74rem;text-decoration:none;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.nome}">${d.nome}</a>
+          <span style="color:var(--text-muted);font-size:0.6rem;white-space:nowrap">${d.adicionadoEm||''}</span>
+        </div>`).join('')}
+    </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+// ── Auto-login ao carregar a página ──
+window.addEventListener('load', () => {
+  tentarAutoLogin();
+});
 
 // Fechar modais clicando fora
 document.addEventListener('click', e=>{
