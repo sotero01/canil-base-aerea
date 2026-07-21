@@ -3471,13 +3471,12 @@ function salvarCao() {
     if(c.medDiaria!==medDiaria) changes.push('medicação diária atualizada');
     if(c.obs!==obs)             changes.push('observações atualizadas');
 
-    // Merge docs por categoria, mantendo existentes
-    const docsAntes = c.docs || { vacina:[], exame:[], outro:[] };
-    const docsBase  = Array.isArray(docsAntes) ? { vacina:[], exame:[], outro:[] } : docsAntes;
+    // caoDocsTemp já contém todos os docs (existentes + novos) carregados em abrirModalCao
+    // Basta usar diretamente como estado final
     const docsFinal = {
-      vacina: [...(docsBase.vacina||[]), ...(caoDocsTemp.vacina||[])],
-      exame:  [...(docsBase.exame||[]),  ...(caoDocsTemp.exame||[])],
-      outro:  [...(docsBase.outro||[]),  ...(caoDocsTemp.outro||[])],
+      vacina: [...(caoDocsTemp.vacina||[])],
+      exame:  [...(caoDocsTemp.exame||[])],
+      outro:  [...(caoDocsTemp.outro||[])],
     };
     Object.assign(c,{nome,raca,condutor,peso,sexo,nasc,origem,chegada,registro,transferencias,coleira,coleiraDt,coleiraTroca,coleiraMarca,carrapDt,carrapProx,carrapProd,vermifugo,vermData,vermProx,medDiaria,obs,vacinas,docs:docsFinal});
     if(!c.historico) c.historico=[];
