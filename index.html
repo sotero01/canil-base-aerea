@@ -2321,6 +2321,7 @@ let state = {
 // ====== JSONBIN HELPERS ======
 let _saving = false;
 let _pendingSave = false;
+let _dataLoaded = false; // flag: só permite salvar no Gist após carregar dados
 
 async function loadData() {
   if(!gistConfigurado()) {
@@ -2349,17 +2350,18 @@ async function loadData() {
     state.caes         = d.caes         || [];
     state.racao        = d.racao        || [];
     state.log          = d.log          || [];
-    // Carrega usuários do Gist (sincronizados entre dispositivos)
+    // Carrega usuários do Gist
     if(d.usuarios) {
-      const stored = d.usuarios;
-      localStorage.setItem('canil_users', JSON.stringify(stored));
+      localStorage.setItem('canil_users', JSON.stringify(d.usuarios));
     }
+    _dataLoaded = true; // libera saves para o Gist
     salvarLocal();
     showSyncStatus('ok', 'SINCRONIZADO');
     renderAll();
   } catch(e) {
     console.error('loadData error:', e.message||e);
     carregarLocal();
+    _dataLoaded = true; // permite salvar com dados do cache local
     showSyncStatus('offline', 'CACHE LOCAL');
     renderAll();
   }
@@ -2395,6 +2397,14 @@ function carregarLocal() {
 }
 
 async function saveData() {
+  // SEGURANÇA: só salva no Gist se os dados já foram carregados do servidor
+  // Isso evita sobrescrever dados reais com estado vazio
+  if(!_dataLoaded && gistConfigurado()) {
+    console.warn('saveData bloqueado: dados ainda não carregados do Gist');
+    salvarLocal(); // salva só local
+    return;
+  }
+
   // Sempre salva localmente primeiro (instantâneo)
   salvarLocal();
 
@@ -2408,7 +2418,6 @@ async function saveData() {
   _saving = true;
   showSyncStatus('syncing', 'SALVANDO...');
   try {
-    // Inclui usuários no payload para sincronizar entre dispositivos
     const usersStored = localStorage.getItem('canil_users');
     const payload = {
       materiais:    state.materiais,
@@ -2419,10 +2428,10 @@ async function saveData() {
       usuarios:     usersStored ? JSON.parse(usersStored) : {},
       log:          state.log.slice(0, 500),
     };
-    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+    const res = await fetch(\`https://api.github.com/gists/\${GIST_ID}\`, {
       method: 'PATCH',
       headers: {
-        'Authorization': `token ${GIST_TOKEN}`,
+        'Authorization': \`token \${GIST_TOKEN}\`,
         'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json',
       },
@@ -2434,8 +2443,7 @@ async function saveData() {
     showSyncStatus('ok', 'SINCRONIZADO');
   } catch(e) {
     console.error('saveData error:', e.message||e);
-    const msg = e.message?.includes('403') ? 'ERRO 403 — JSONBin bloqueado' : 'SALVO LOCALMENTE';
-    showSyncStatus('offline', msg);
+    showSyncStatus('offline', 'SALVO LOCALMENTE');
   } finally {
     _saving = false;
     if(_pendingSave) { _pendingSave = false; saveData(); }
@@ -2546,8 +2554,8 @@ function doCadastro() {
     graduacao: grad
   };
   saveUsers(users);
-  // Sincroniza novo usuário com o Gist imediatamente
-  saveData();
+  // Sincroniza usuários com Gist somente se dados carregados
+  if(_dataLoaded) saveData();
 
   // Limpa campos
   document.getElementById('cadUser').value = '';
@@ -2626,6 +2634,7 @@ function tentarAutoLogin() {
 
 function doLogout() {
   localStorage.removeItem('canil_session');
+  _dataLoaded = false; // reseta para próximo login
   state.currentUser = null;
   state.materiais = []; state.medicamentos = [];
   state.treinos = []; state.caes = []; state.racao = []; state.log = [];
